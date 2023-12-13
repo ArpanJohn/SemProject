@@ -75,7 +75,7 @@ for name in download_list:
     create_folder(folder_path)
     
     # URL of the file you want to download
-    url1 = "wget -q -nH --no-check-certificate --cut-dirs=7 -r -l0 -c -N -np -A fit -R 'index*' -erobots=off --retr-symlinks https://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/"+year+name+'/current/'
+    url1 = "wget -q -nH --no-check-certificate --cut-dirs=7 -r -l0 -c -N -np -A '*_trigdat_*','*_tcat_*','*_tte_*' -erobots=off --retr-symlinks https://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/"+year+name+'/current/'
     url2 = "wget -q -nH --no-check-certificate --cut-dirs=7 -r -l0 -c -N -np -R 'index*' -erobots=off --retr-symlinks https://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/"+year+name+'/quicklook/'
 
     # Directory where you want to save the downloaded file

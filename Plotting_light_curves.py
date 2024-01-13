@@ -39,10 +39,15 @@ path_value = data.get("data_path", "")
 print("data_path:", path_value)
 
 # List of samples to go through
-sample_list = ['GRB_bn100507577','GRB_bn101227195','GRB_bn120227725','GRB_bn130623488','GRB_bn160919613','GRB_bn220730659','GRB_bn110819665']
+sample_list = []    #['GRB_bn100507577','GRB_bn101227195','GRB_bn120227725','GRB_bn130623488','GRB_bn160919613','GRB_bn220730659','GRB_bn110819665']
+for filename in os.listdir(path_value):
+    if "GRB" in filename:
+        sample_list.append(filename)
+
+print('number of samples to graph', len(sample_list))
 
 # List of bins in which the sample will be binned
-bin_list = [0.001,0.01,0.1,1]
+bin_list = [0.01,0.1,1,2,5]
 
 for sample in sample_list:
 
@@ -108,6 +113,11 @@ for sample in sample_list:
         # Define the range and number of bins
         range_min = min(counts)
         range_max = max(counts)
+
+        if i == 0.1:
+            range_min = -10
+            range_max =  10
+            
 
         bin_size = i
 

@@ -60,7 +60,7 @@ def create_folder(folder): # to create the file to store data in
 
 
 # Change according to the transients you want to download note they all have to be of same type
-download_list = ['bn130623488','bn110819665'] #'bn220730659','bn120227725','bn101227195','bn160919613','bn100507577',
+download_list = ['bn140518709','bn121116459','bn090513941','bn171212434','bn150403913']#['bn090922605','bn091102607','bn100926595','bn171212434','bn130327350','bn221201517','bn110316139','bn090524346']        #['bn130623488','bn110819665'] #'bn220730659','bn120227725','bn101227195','bn160919613','bn100507577',
 transient_type = 'GRB'
 
 
@@ -75,7 +75,7 @@ for name in download_list:
     create_folder(folder_path)
     
     # URL of the file you want to download
-    url1 = "wget -q -nH --no-check-certificate --cut-dirs=7 -r -l0 -c -N -np -A fit -R 'index*' -erobots=off --retr-symlinks https://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/"+year+name+'/current/'
+    url1 = 'wget -q -nH --no-check-certificate --cut-dirs=7 -r -l0 -c -N -np -A "*_tte_*,*_trigdat_*" -R "index"* -erobots=off --retr-symlinks https://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/'+year+name+'/current/'
     url2 = "wget -q -nH --no-check-certificate --cut-dirs=7 -r -l0 -c -N -np -R 'index*' -erobots=off --retr-symlinks https://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/"+year+name+'/quicklook/'
 
     # Directory where you want to save the downloaded file
@@ -85,14 +85,14 @@ for name in download_list:
     wget_command1 = f"{url1} -P {download_folder}"
     wget_command2 = f"{url2} -P {download_folder}"
 
-    try:
-        # Run the wget command
-        subprocess.run(wget_command2, shell=True, check=True)
-        print(f"Downloaded {url2.split('/')[-3:]} to {download_folder}")
-    except subprocess.CalledProcessError as e:
-        print(f"Error downloading the file: {e}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    # try:
+    #     # Run the wget command
+    #     subprocess.run(wget_command2, shell=True, check=True)
+    #     print(f"Downloaded {url2.split('/')[-3:]} to {download_folder}")
+    # except subprocess.CalledProcessError as e:
+    #     print(f"Error downloading the file: {e}")
+    # except Exception as e:
+    #     print(f"An error occurred: {e}")
         
     try:
         # Run the wget command

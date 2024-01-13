@@ -10,15 +10,15 @@ import subprocess
 from Calculating_det_angles import estimate_source_angles_detectors #importing ma'ams function
 
 # list of events and transient type
-event_list = ['bn140518709','bn121116459','bn090513941','bn171212434','bn150403913']
+event_list = ['bn140518709']#,'bn121116459','bn090513941','bn171212434','bn150403913']
 transient_type = 'GRB'
 
 # list of bin sizes
-# bin_list = [0.001,0.005,0.01,0.1,0.5,1]
-bin_list = [0.1,1,10]
+bin_list = [0.001,0.005,0.01,0.1,0.5,1]
+# bin_list = [0.1,1,10]
 
 # number of datapoints in a light curve
-data_no = 200
+data_no = 20000
 
 # ratio of pre-trigger to post-trigger
 r = 0.25
@@ -63,6 +63,7 @@ def run_wget(wget_command):
 
 # creating the data set folder
 data_set_folder = os.path.join(path_value,'test_data_set_'+transient_type)
+create_folder(data_set_folder)
 
 for name in event_list:
 
@@ -146,9 +147,27 @@ for name in event_list:
         data_array.append(hist)
 
     data_array = np.array(data_array)
+
     # Save the 2D array to a text file
     data_set_path = os.path.join(data_set_folder,name+'_'+transient_type)
     np.savetxt(data_set_path, data_array, fmt='%d', delimiter='\t')
 
 # Read the 2D array back from the text file
 # loaded_data = np.loadtxt(data_set_path, dtype=int, delimiter='\t')
+
+# Getting the path the data directory from json file
+# Specify the path to your JSON file
+# json_file_path = "data_path.json"
+
+# # Read the JSON file
+# with open(json_file_path, 'r') as file:
+#     data = json.load(file)
+
+# # Access the path from the JSON data
+# path_value = data.get("data_path", "")
+
+# data_set_folder = os.path.join(path_value,'test_data_set_GRB')
+
+# data_list = os.listdir(data_set_folder)
+
+# print(data_list)

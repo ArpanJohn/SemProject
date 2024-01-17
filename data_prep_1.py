@@ -9,13 +9,47 @@ import json
 import subprocess
 from Calculating_det_angles import estimate_source_angles_detectors #importing ma'ams function
 
-# list of events and transient type
-event_list = ['bn140518709']#,'bn121116459','bn090513941','bn171212434','bn150403913']
-transient_type = 'GRB'
 
+# getting all the event names
+from bs4 import BeautifulSoup
+def extract_strings(html_file_path):
+    try:
+        # Open and read the HTML file
+        with open(html_file_path, 'r', encoding='utf-8') as file:
+            html_content = file.read()
+
+        # Parse the HTML content using BeautifulSoup
+        soup = BeautifulSoup(html_content, 'html.parser')
+
+        # Extract all strings from the HTML content
+        all_strings = soup.stripped_strings
+
+        event_names = []
+
+        # Print the extracted strings
+        for string in all_strings:
+            if 'bn' in string:
+                # print(string)
+                event_names.append(string)
+    except FileNotFoundError:
+        print(f"File '{html_file_path}' not found.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    print('number of available transients: ',len(event_names))
+    return event_names
+
+# Replace 'path/to/your/file.html' with the path to your HTML file
+html_file_path = 'C:/Users/arpan/Downloads/HEASARC_Browse_.html'
+event_names = extract_strings(html_file_path)[50:55]
+print(event_names)
+print(len(event_names))
+
+# list of events and transient type and data set name
+event_list = event_names
+transient_type = 'GRB'
+data_set_name = '14.01-5_'
 # list of bin sizes
-bin_list = [0.001,0.005,0.01,0.1,0.5,1]
-# bin_list = [0.1,1,10]
+bin_list = [0.001,0.005,0.01,0.1,0.5,1,5]
 
 # number of datapoints in a light curve
 data_no = 20000
@@ -42,7 +76,7 @@ def create_folder(folder): # to create the file to store data in
     except FileNotFoundError:
         print(f"Folder '{folder}' not found.")
     except OSError as e:
-        print(f"An error occurred: {e}")
+        print(f"An error occurred: {e} \n also", print(folder))
     try:
         os.mkdir(folder)
         print(f"Folder '{folder}' created successfully.")
@@ -62,7 +96,7 @@ def run_wget(wget_command):
         print(f"An error occurred: {e}")
 
 # creating the data set folder
-data_set_folder = os.path.join(path_value,'test_data_set_'+transient_type)
+data_set_folder = os.path.join(path_value,data_set_name+transient_type)
 create_folder(data_set_folder)
 
 for name in event_list:
@@ -95,9 +129,9 @@ for name in event_list:
     event_filename = trigdat_file[0]
 
     # Getting the RA and DEC
-    pha_list = fits.open(event_filename, memmap=True)
-    ra_obj,dec_obj = (pha_list[0].header['RA_OBJ']) ,	(pha_list[0].header['DEC_OBJ'])
-    print(ra_obj,dec_obj)
+    with fits.open(event_filename, memmap=True) as pha_list:
+        ra_obj,dec_obj = (pha_list[0].header['RA_OBJ']) ,	(pha_list[0].header['DEC_OBJ'])
+        print(ra_obj,dec_obj)
 
     brightest_nai, bright_nais, brightest_bgo = estimate_source_angles_detectors.angle_to_grb(ra_obj,dec_obj,event_filename) # Getting the values
     
@@ -116,17 +150,16 @@ for name in event_list:
     NaI_detector = glob.glob(file_pattern)
 
     print('NaI_detector used',NaI_detector[0])
-    hdul = fits.open(NaI_detector[0])
 
     # fetchinng data
-    energy_channel_data = hdul[1].data
-    all_count_data = np.array(hdul[2].data)
+    with fits.open(NaI_detector[0]) as hdul:
+        energy_channel_data = hdul[1].data
+        all_count_data = np.array(hdul[2].data)
 
     # getting counts accross all energy channels
     counts = [float(sublist[0]) for sublist in all_count_data]
 
     data_array = []
-    print('here')
 
     for i in bin_list:
         # Define the range and number of bins

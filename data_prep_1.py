@@ -7,6 +7,8 @@ import numpy as np
 import glob
 import json
 import subprocess
+import io
+from contextlib import redirect_stdout
 from Calculating_det_angles import estimate_source_angles_detectors #importing ma'ams function
 
 
@@ -133,8 +135,11 @@ for name in event_list:
         ra_obj,dec_obj = (pha_list[0].header['RA_OBJ']) ,	(pha_list[0].header['DEC_OBJ'])
         print(ra_obj,dec_obj)
 
-    brightest_nai, bright_nais, brightest_bgo = estimate_source_angles_detectors.angle_to_grb(ra_obj,dec_obj,event_filename) # Getting the values
+    trap = io.StringIO()
+    with redirect_stdout(trap):
+        brightest_nai, bright_nais, brightest_bgo = estimate_source_angles_detectors.angle_to_grb(ra_obj,dec_obj,event_filename) # Getting the values
     
+
     # URL of the file you want to download
     url1 = 'wget -q -nH --no-check-certificate --cut-dirs=7 -r -l0 -c -N -np -A "*_tte_'+brightest_nai+'_*" -R "index"* -erobots=off --retr-symlinks https://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/'+year+name+'/current/'
 

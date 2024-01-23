@@ -59,7 +59,7 @@ def run_wget_download(url,download_folder):
         # Run the wget command
         print('download start')
         subprocess.run(wget_command, shell=True, check=True)
-        print(f"Downloaded {wget_command.split('/')[-3:-1]} to {download_folder}")
+        print(f"Downloaded {wget_command.split('/')[-3]}{wget_command.split('*')[1]} to {download_folder}")
     except subprocess.CalledProcessError as e:
         print(f"Error downloading the file: {e}")
     except Exception as e:

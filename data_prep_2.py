@@ -5,11 +5,11 @@ import numpy as np
 import glob
 import io
 from contextlib import redirect_stdout
-from Calculating_det_angles import estimate_source_angles_detectors #importing ma'ams function
 from Tools import tools
+from Calculating_det_angles import estimate_source_angles_detectors #importing ma'ams function
 
 # Replace 'path/to/your/file.html' with the path to your HTML file
-html_file_path = r"C:\Users\arpan\Downloads\TGFs.html" # this
+html_file_path = r"C:\Users\arpan\Downloads\GRBs.html" # this
 html_string = tools.extract_strings_html(html_file_path)
 
 event_list = []
@@ -17,28 +17,27 @@ event_list = []
 for entry in html_string:
     if 'bn' in entry:
         event_list.append(entry)
-print('number of available events in html file: ', len(event_list))
 
 # list of events and transient type and data set name
 event_list = event_list[101:103]
 transient_type = 'GRB'
-data_set_name = '17.01-2_'
+data_set_name = '19.01-2_'
 
 # list of bin sizes
 bin_list = [0.001,0.005,0.01,0.1,0.5,1,5]
 
 # number of datapoints in a light curve
-data_no = 200000
+data_no = 20000
 
-# time interval around trigger
-ti = [-50,150]
-t = ti[1] - ti[0]
- 
+# ratio of pre-trigger to post-trigger
+r = 0.25
+
 dir_path = tools.json_path(r'data_path.json')
 
 # creating the data set folder
 data_set_path = os.path.join(dir_path,data_set_name+transient_type)
 tools.create_folder(data_set_path)
+
 for event in event_list:
     year = '20'+event[2:4]+"/"
 
@@ -90,25 +89,17 @@ for event in event_list:
 
     for i in bin_list:
         # Define the range and number of bins
-        range_min = ti[0]
-        range_max = ti[1]
+        range_min = -data_no * i * r
+        range_max =  data_no * i * (1-r)
             
         bin_size = i
-
-        f = data_no * i / t
 
         # Create bin edges
         bin_edges = np.arange(range_min, range_max, bin_size)
 
-        # Finding energy channel range
-        energy_channel_range = f"{energy_channel_data[0][1]:.2f} to {energy_channel_data[-1][-1]:.2f}KeV"
-
         # Create the histogram using numpy.histogram
         hist, edges = np.histogram(counts, bins=bin_edges)
-        hist = list(hist)
-        hist.append(sum(hist)/len(hist))
-        hist = np.array(hist)
-        hist = np.repeat(hist,f)
+
         data_array.append(hist)
 
     data_array = np.array(data_array)
@@ -118,3 +109,4 @@ for event in event_list:
     np.savetxt(data, data_array, fmt='%d', delimiter='\t')
 
 print('\n----------------------------------------------------------------------------\n\nevents', event_list, ' in folder', data_set_path)
+

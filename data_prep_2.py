@@ -8,29 +8,52 @@ from contextlib import redirect_stdout
 from Tools import tools
 from Calculating_det_angles import estimate_source_angles_detectors #importing ma'ams function
 
-# Replace 'path/to/your/file.html' with the path to your HTML file
-html_file_path = r"C:\Users\arpan\Downloads\GRBs.html" # this
-html_string = tools.extract_strings_html(html_file_path)
+import pandas as pd
+df = pd.read_csv('all_events.csv')
 
-event_list = []
-# getting only the event names
-for entry in html_string:
-    if 'bn' in entry:
-        event_list.append(entry)
+# Shuffle the DataFrame
+df_shuffled = df.sample(frac=1, random_state=42)  # Set random_state for reproducibility
 
-# list of events and transient type and data set name
-event_list = event_list[101:103]
-transient_type = 'GRB'
-data_set_name = '19.01-2_'
+event_counter = {'GRB' : 0, 'SFLARE': 0 , 'TGF': 0, 'SGR':0,'DISTPAR':0}
+event_limit = 20
+
+event_type, name = [], []
+for index, row in df_shuffled.iterrows():
+    if row['event_type'] == 'TGF':
+        if event_counter[row['event_type']] < event_limit:
+            event_counter[row['event_type']] += 1
+            event_type.append(row['event_type'])
+            name.append(row['name'])
+    elif event_counter['GRB'] == event_limit and event_counter['SFLARE'] == event_limit and event_counter['TGF'] == event_limit and event_counter['SGR'] == event_limit and event_counter['DISTPAR'] == event_limit:
+        break
+
+for i,j in zip(event_type,name):
+    print(i,j)
+event_list = name
+
+# # Replace 'path/to/your/file.html' with the path to your HTML file
+# html_file_path = r"C:\Users\arpan\Downloads\GRBs.html" # this
+# html_string = tools.extract_strings_html(html_file_path)
+
+# event_list = []
+# # getting only the event names
+# for entry in html_string:
+#     if 'bn' in entry:
+#         event_list.append(entry)
+
+# # list of events and transient type and data set name
+# event_list = event_list[101:103]
+transient_type = 'TGF'
+data_set_name = '28.01-2_'
 
 # list of bin sizes
 bin_list = [0.001,0.005,0.01,0.1,0.5,1,5]
 
 # number of datapoints in a light curve
-data_no = 20000
+data_no = 200
 
 # ratio of pre-trigger to post-trigger
-r = 0.25
+r = 0.5
 
 dir_path = tools.json_path(r'data_path.json')
 

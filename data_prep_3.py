@@ -8,20 +8,38 @@ from contextlib import redirect_stdout
 from Tools import tools
 from Calculating_det_angles import estimate_source_angles_detectors #importing ma'ams function
 
-# Replace 'path/to/your/file.html' with the path to your HTML file
-html_file_path = r"C:\Users\arpan\Downloads\SFLAREs.html" # this
-html_string = tools.extract_strings_html(html_file_path)
+import pandas as pd
+df = pd.read_csv('all_events.csv')
 
-event_list = []
+# Shuffle the DataFrame
+df_shuffled = df.sample(frac=1, random_state=42)  # Set random_state for reproducibility
+
+event_counter = {'GRB' : 0, 'SFLARE': 0 , 'TGF': 0, 'SGR':0,'DISTPAR':0}
+event_limit = 10
+
+event_type, name = [], []
+for index, row in df_shuffled.iterrows():
+    if event_counter[row['event_type']] < event_limit:
+        event_counter[row['event_type']] += 1
+        event_type.append(row['event_type'])
+        name.append(row['name'])
+    elif event_counter['GRB'] == event_limit and event_counter['SFLARE'] == event_limit and event_counter['TGF'] == event_limit and event_counter['SGR'] == event_limit and event_counter['DISTPAR'] == event_limit:
+        break
+
+for i,j in zip(event_type,name):
+    print(i,j)
+
+event_list = name
+
 # getting only the event names
-for entry in html_string:
-    if 'bn' in entry:
-        event_list.append(entry)
+# for entry in html_string:
+#     if 'bn' in entry:
+#         event_list.append(entry)
 
 # list of events and transient type and data set name
-event_list = event_list[16:21]
-transient_type = 'SFLARE'
-data_set_name = '21.01-5_'
+event_list = event_list
+# transient_type = 'SFLARE'
+data_set_name = '27.01-5_'
 
 # list of bin sizes
 bin_list = [0.001,0.005,0.01,0.1,0.5,1,5]
@@ -32,10 +50,10 @@ ti = [-10,100]
 dir_path = tools.json_path(r'data_path.json')
 
 # creating the data set folder
-data_set_path = os.path.join(dir_path,data_set_name+transient_type)
+data_set_path = os.path.join(dir_path,data_set_name)
 tools.create_folder(data_set_path)
 
-for event in event_list:
+for event,type in zip(event_list,event_type):
     year = '20'+event[2:4]+"/"
 
     # creating a temperary folder to download the data before processing into .txt files
@@ -101,8 +119,8 @@ for event in event_list:
 
     data_array = np.array(data_array)
 
-    # Save the 2D array to a text file
-    data = os.path.join(data_set_path,event+'_'+transient_type)
+    # Save the array to a text file
+    data = os.path.join(data_set_path,type+'_'+event)
     np.savetxt(data, data_array, fmt='%d', delimiter='\t')
 
 print('\n----------------------------------------------------------------------------\n\nevents', event_list, ' in folder', data_set_path)

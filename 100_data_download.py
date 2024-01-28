@@ -57,6 +57,8 @@ event_types = event_type
 dir_path = tools.json_path(r'data_path.json')
 
 for event_name,event_type in zip(event_list,event_types):
+    if event_type == 'GRB' or event_type == 'TGF' or event_type == 'SFLARE':
+        continue
     temp_path = os.path.join(dir_path, r'temp')
     tools.create_folder(temp_path)
 
@@ -87,3 +89,4 @@ for event_name,event_type in zip(event_list,event_types):
     url = 'wget -q -nH --no-check-certificate --cut-dirs=7 -r -l0 -c -N -np -A "*_tte_'+brightest_nai+'_*" -R "index"* -erobots=off --retr-symlinks https://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/'+year+event+'/current/'
     # Construct the wget command
     tools.run_wget_download(url,os.path.join(data_set_path,event_type + '_' + event))
+    print(len(event_list[event_list.index(event_name):]))

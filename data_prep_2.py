@@ -5,131 +5,78 @@ import numpy as np
 import glob
 import io
 from contextlib import redirect_stdout
-from Tools import tools
 from Calculating_det_angles import estimate_source_angles_detectors #importing ma'ams function
+from Tools import tools
 
-import pandas as pd
-df = pd.read_csv('all_events.csv')
+# name of the data set
+source_data_set_path = r"C:\Users\arpan\OneDrive\Documents\GRB\data\100_data_set"
 
-# Shuffle the DataFrame
-df_shuffled = df.sample(frac=1, random_state=42)  # Set random_state for reproducibility
+# Get a list of all folders in the specified directory
+folders = [str(folder) for folder in os.listdir(source_data_set_path) if os.path.isdir(os.path.join(source_data_set_path, folder))]
 
-event_counter = {'GRB' : 0, 'SFLARE': 0 , 'TGF': 0, 'SGR':0,'DISTPAR':0}
-event_limit = 20
-
-event_type, name = [], []
-for index, row in df_shuffled.iterrows():
-    if row['event_type'] == 'TGF':
-        if event_counter[row['event_type']] < event_limit:
-            event_counter[row['event_type']] += 1
-            event_type.append(row['event_type'])
-            name.append(row['name'])
-    elif event_counter['GRB'] == event_limit and event_counter['SFLARE'] == event_limit and event_counter['TGF'] == event_limit and event_counter['SGR'] == event_limit and event_counter['DISTPAR'] == event_limit:
-        break
-
-for i,j in zip(event_type,name):
-    print(i,j)
-event_list = name
-
-# # Replace 'path/to/your/file.html' with the path to your HTML file
-# html_file_path = r"C:\Users\arpan\Downloads\GRBs.html" # this
-# html_string = tools.extract_strings_html(html_file_path)
-
-# event_list = []
-# # getting only the event names
-# for entry in html_string:
-#     if 'bn' in entry:
-#         event_list.append(entry)
-
-# # list of events and transient type and data set name
-# event_list = event_list[101:103]
-transient_type = 'TGF'
-data_set_name = '28.01-2_'
 
 # list of bin sizes
 bin_list = [0.001,0.005,0.01,0.1,0.5,1,5]
 
+# ratio 
+r = 0.25
 # number of datapoints in a light curve
-data_no = 200
-
-# ratio of pre-trigger to post-trigger
-r = 0.5
+data_no = 2000 
+print('number of data point' , data_no)
+ 
 
 dir_path = tools.json_path(r'data_path.json')
+data_set_name = "data_set_2_proccessed"
 
 # creating the data set folder
-data_set_path = os.path.join(dir_path,data_set_name+transient_type)
+data_set_path = os.path.join(dir_path,data_set_name)
 tools.create_folder(data_set_path)
+print('start')
+for folder in folders:
+    try:
+        event_type,event = folder.split("_")
+        year = '20'+event[2:4]+"/"
 
-for event in event_list:
-    year = '20'+event[2:4]+"/"
+        # Use the glob module to search for TTE files in the directory
+        target_string = "_tte_"
+        file_pattern = os.path.join(source_data_set_path,folder,'current', f"*{target_string}*")
+        NaI_detector = glob.glob(file_pattern)
 
-    # creating a temperary folder to download the data before processing into .txt files
-    temp_path = os.path.join(dir_path, r'temp')
-    tools.create_folder(temp_path)
-    
-    # URL of the file you want to download
-    url = 'wget -q -nH --no-check-certificate --cut-dirs=7 -r -l0 -c -N -np -A "*_trigdat_*" -R "index"* -erobots=off --retr-symlinks https://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/'+year+event+'/current/'
-    tools.run_wget_download(url,temp_path)
+        # print('NaI_detector used',NaI_detector[0])
 
-    # Finding Trigdat file
-    trig_string = "_trigdat_"
-    trig_pattern = os.path.join(temp_path,'current', f"*{trig_string}*")
-    trigdat_file = glob.glob(trig_pattern)
-    
-    # Get the spacecraft pointing from here 
-    event_filename = trigdat_file[0]
+        # fetchinng data
+        with fits.open(NaI_detector[0], memmap=True) as hdul:
+            energy_channel_data = hdul[1].data.copy()
+            all_count_data = np.array(hdul[2].data.copy())
 
-    # Getting the RA and DEC
-    with fits.open(event_filename, memmap=True) as pha_list:
-        ra_obj,dec_obj = (pha_list[0].header['RA_OBJ']) ,	(pha_list[0].header['DEC_OBJ'])
+        # getting counts accross all energy channels
+        counts = [float(sublist[0]) for sublist in all_count_data]
 
-    trap = io.StringIO()
-    with redirect_stdout(trap):
-        brightest_nai, bright_nais, brightest_bgo = estimate_source_angles_detectors.angle_to_grb(ra_obj,dec_obj,event_filename) # Getting the values
-    
-    # URL of the tte file to download
-    url = 'wget -q -nH --no-check-certificate --cut-dirs=7 -r -l0 -c -N -np -A "*_tte_'+brightest_nai+'_*" -R "index"* -erobots=off --retr-symlinks https://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/'+year+event+'/current/'
-    # Construct the wget command
-    tools.run_wget_download(url,temp_path)
+        data_array = []
 
-    # Use the glob module to search for TTE files in the directory
-    target_string = "_tte_"
-    file_pattern = os.path.join(temp_path,'current', f"*{target_string}*")
-    NaI_detector = glob.glob(file_pattern)
+        for i in bin_list:
+            # Define the range and number of bins
+            range_min = -data_no * i * r
+            range_max =  data_no * i * (1-r)
+                
+            bin_size = i
 
-    print('NaI_detector used',NaI_detector[0])
+            # Create bin edges
+            bin_edges = np.arange(range_min, range_max, bin_size)
 
-    # fetchinng data
-    with fits.open(NaI_detector[0], memmap=True) as hdul:
-        energy_channel_data = hdul[1].data.copy()
-        all_count_data = np.array(hdul[2].data.copy())
+            # Create the histogram using numpy.histogram
+            hist, edges = np.histogram(counts, bins=bin_edges)
 
-    # getting counts accross all energy channels
-    counts = [float(sublist[0]) for sublist in all_count_data]
+            data_array.append(hist)
 
-    data_array = []
+        data_array = np.array(data_array)
 
-    for i in bin_list:
-        # Define the range and number of bins
-        range_min = -data_no * i * r
-        range_max =  data_no * i * (1-r)
-            
-        bin_size = i
+        # Save the 2D array to a text file
+        data = os.path.join(data_set_path,event_type+'_'+event)
+        np.savetxt(data, data_array, fmt='%d', delimiter='\t')
+        # print('saved to', data)
+    except Exception as e:
+        print(f'error {e} in ',folder)
 
-        # Create bin edges
-        bin_edges = np.arange(range_min, range_max, bin_size)
 
-        # Create the histogram using numpy.histogram
-        hist, edges = np.histogram(counts, bins=bin_edges)
-
-        data_array.append(hist)
-
-    data_array = np.array(data_array)
-
-    # Save the 2D array to a text file
-    data = os.path.join(data_set_path,event+'_'+transient_type)
-    np.savetxt(data, data_array, fmt='%d', delimiter='\t')
-
-print('\n----------------------------------------------------------------------------\n\nevents', event_list, ' in folder', data_set_path)
-
+print('\n----------------------------------------------------------------------------\n\nevents', folders, ' in folder', data_set_path)

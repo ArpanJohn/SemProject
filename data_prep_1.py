@@ -27,7 +27,7 @@ data_no = int(t / min(bin_list))
 print('number of data point' , data_no)
  
 dir_path = tools.json_path(r'data_path.json')
-data_set_name = "data_set_1_proccessed"
+data_set_name = "data_set_2_proccessed"
 
 # creating the data set folder
 data_set_path = os.path.join(dir_path,data_set_name)
